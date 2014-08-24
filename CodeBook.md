@@ -32,10 +32,13 @@ Detailed Program Description
 ----------------------------
 Program will get relative/full path depending on where the program is stored. This program should be stored in the root path (at same level that "UCI HAR Dataset" directory is).
 featuresFPath, trainFPath, and testFPath variables contains path and file names to get column names, and dataset files. The full/relative path is concatenated along with the file names in order to get column names, and dataset files:
+
 	  featuresFPath<-paste(dataPath,"/","features.txt", sep="");
 	  trainFPath<-paste(dataPath,"/train/X_train.txt", sep="");
 	  testFPath<-paste(dataPath,"/train/X_train.txt", sep="");
+	  
 Program looks for features.txt file, train, and test directories. If these are not found, the program will raise a warning asking to store the program at the same level where UCI HAR Dataset directory is. 
+
 	  if (file.exists(featuresFPath) & file.exists(trainFPath) & file.exists(testFPath))
 	  { ..... }
 	  else {
@@ -44,35 +47,50 @@ Program looks for features.txt file, train, and test directories. If these are n
 Read features.txt file to get column numbers and their respective column names into two list then set this information to a data frame (columnsInDF -columns in Data frame-) first column contains numeric column number (colNumber) and the second one contains the column title (colTitle). Note that to get these columns names program uses scan instead of reading line by line... this is because features.txt is a small file that does not requires big amounts of memory.
 	
 	columnsInDF<-data.frame(scan(featuresFPath, what=list(colNumber=numeric(0),colTitle=character(0))))
+
 Create a data frame sub-setting from the file with the columns numbers that contains "Mean", "mean" and "std" values
+
 	selectedCols<-subset(columnsInDF,select=c(1,2),subset=(grepl("ean",columnsInDF$colTitle) | grepl("std",columnsInDF$colTitle)))	
+
 Create two vectors: colSelNums contains column numbers that I will use to extract required columns, and colSelTitles that contains their respective column title. These two vectors will be used as columns selection and columns names.	
+
 	colSelNums<-selectedCols[,1]
 	colSelTitles<-as.character(selectedCols[,2])
-
 		
 One important aspect analysing information from files is the size of it, so the program gets elements line by line using scan from the features.txt file in order to avoid any memory overloading before to end full processing of it
 it will get and store in a numeric vector 561 elements per line (I applied same strategy to get information for the dataset files). 
 		
 This will be accomplished using a loop through the file.
+
 	for (loopNum in 1:2)
 	{
 		if (loopNum==1) currProcessingFile<-trainFPath;
 		if (loopNum==2) currProcessingFile<-testFPath;
 
 Read line by line first to get number of lines for each file then to get data information
+
 	for(i in 1:numberOfLines) {
 			completeLine <- scan(file =fileconx1, what=numeric(0), nlines=1, quiet=TRUE);
 			numLinesRead<-numLinesRead+1;
+
 Append row by row selected information using rbind funtion and using the colSelNums vector that contains required column numbers 
+
 			tidyDF<-rbind(tidyDF,completeLine[colSelNums]);
+
 Set column names for tidy data frame
+
 	colnames(tidyDF)<-colSelTitles;
+
 Get column average and specify number of columns using length() function
+
 	avgDF<-data.frame(matrix(colMeans(tidyDF, na.rm = FALSE),ncol=length(colSelNums)));
+
 Sets column names for average data frame
+
 	colnames(avgDF)<-colSelTitles;
+
 Create output in current directory file depending on chosen format by user (csv/txt) 
+
 	if (grepl(outputType,"csv")) 
 	{
 		filename<-paste("tidyDataSet-",dt,".csv",sep="");
